@@ -39,7 +39,6 @@ int pixel = 0;
 #include <Wire.h>
 #endif
 
-
 // ***************  SPI  *************** //
 
 #if SPI_ACTIVE == 1
@@ -58,7 +57,6 @@ MXC6655 accel;
 StepperNB moteur_droit(GPIO_DIR_D, GPIO_STEP_D, GPIO_MS1_D, GPIO_MS2_D, GPIO_MS3_D, 200, true);
 hw_timer_t *Timer3_Cfg = NULL; // Moteur Droit
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
-
 
 // Fonction d'interruption pour envoyer les impulsions au moteur droit
 void IRAM_ATTR Timer3_MoteurD_ISR()
@@ -86,8 +84,6 @@ void IRAM_ATTR Timer3_MoteurD_ISR()
 }
 #endif
 
-
-
 // ***************  CAPTEUR  *************** //
 
 #include "Adafruit_VL53L0X.h"
@@ -103,9 +99,6 @@ unsigned long previousMillisControlLoop;
 float dt = 0.1;
 uint8_t anti_windup = 0;
 /********************************************/
-
-
-
 
 // ***************  SETUP  *************** //
 void setup()
@@ -134,15 +127,15 @@ void setup()
   digitalWrite(GPIO_ENABLE_MOTEURS, HIGH);
 #endif
 
-while (!lox.begin()) {
+  while (!lox.begin())
+  {
     Serial.println(F("Failed to boot VL53L0X"));
     delay(1000);
   }
-   lox.startRangeContinuous();
-  
+  lox.startRangeContinuous();
 }
 
- int green = 0;
+int green = 0;
 
 // ***************  LOOP  *************** //
 void loop()
@@ -154,8 +147,7 @@ void loop()
   // Boucle de controle de la vitesse horizontale
   unsigned long currentMillis = millis();
 
- 
-  if (currentMillis - previousMillisControlLoop >= dt*1000)
+  if (currentMillis - previousMillisControlLoop >= dt * 1000)
   {
     previousMillisControlLoop = currentMillis;
 
@@ -169,16 +161,14 @@ void loop()
     green += 10;
     green = green % 255;
 
-     if (lox.isRangeComplete()) {
-    Serial.print("Distance in mm: ");
-    Serial.println(lox.readRange());
-     }
+    if (lox.isRangeComplete())
+    {
+      Serial.print("Distance in mm: ");
+      Serial.println(lox.readRange());
+    }
   }
 
 #if MOTORS_ACTIVE == 1
   moteur_droit.setSpeed(0);
 #endif
 }
-
-
-
