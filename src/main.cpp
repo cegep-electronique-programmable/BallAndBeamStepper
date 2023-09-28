@@ -74,6 +74,13 @@ void IRAM_ATTR Timer3_MoteurD_ISR()
     digitalWrite(GPIO_STEP_D, HIGH);
     delayMicroseconds(2);
     digitalWrite(GPIO_STEP_D, LOW);
+
+    if (moteur_droit.getDirection() == 1) {
+      moteur_droit.setPositionSteps(moteur_droit.getPositionSteps() - 16/moteur_droit.getRatio());
+    }
+    else {
+      moteur_droit.setPositionSteps(moteur_droit.getPositionSteps() + 16/moteur_droit.getRatio());
+    }
   }
 
   timerAlarmWrite(Timer3_Cfg, delay, true);
@@ -141,6 +148,8 @@ void setup()
   pixels.setPixelColor(3, pixels.Color(0, 0, 0));
   pixels.setPixelColor(4, pixels.Color(0, 0, 0));
   pixels.show();
+
+  
 }
 
 int green = 0;
@@ -159,19 +168,27 @@ void loop()
   {
     previousMillisControlLoop = currentMillis;
 
+
+    if (moteur_droit.getPositionSteps() < 90*20*16/36) 
+      moteur_droit.setSpeed(90);
+    else
+      moteur_droit.setSpeed(0);
     
 
     green += 10;
     green = green % 255;
 
+    /*
+    // Section pour tester le capteur
     if (lox.isRangeComplete())
     {
       Serial.print("Distance in mm: ");
       Serial.println(lox.readRange());
     }
+    */
+
+    Serial.println(moteur_droit.getPositionSteps());
+
   }
 
-#if MOTORS_ACTIVE == 1
-  moteur_droit.setSpeed(0);
-#endif
 }

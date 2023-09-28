@@ -142,3 +142,13 @@ int StepperNB::version(void)
 {
     return 0;
 }
+
+void StepperNB::setPositionSteps(int position_steps)
+{
+    this->position_steps = position_steps;
+}
+
+int StepperNB::getPositionSteps(void)
+{
+    return this->position_steps;
+}

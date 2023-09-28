@@ -19,6 +19,9 @@ public:
 
     int version(void);
 
+    int getPositionSteps(void);
+    void setPositionSteps(int position_steps);
+
 private:
     int pin_direction;
     int pin_step;
