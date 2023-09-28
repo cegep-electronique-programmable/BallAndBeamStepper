@@ -88,6 +88,11 @@ void IRAM_ATTR Timer3_MoteurD_ISR()
 
 
 
+// ***************  CAPTEUR  *************** //
+
+#include "Adafruit_VL53L0X.h"
+Adafruit_VL53L0X lox = Adafruit_VL53L0X();
+
 // ***************  CONTROL  *************** //
 unsigned long previousMillisControlLoop;
 
@@ -95,7 +100,7 @@ unsigned long previousMillisControlLoop;
 #define KI -0.82
 #define KD -0.1
 
-float dt = 0.001;
+float dt = 0.1;
 uint8_t anti_windup = 0;
 /********************************************/
 
@@ -128,6 +133,13 @@ void setup()
   // Disable motors
   digitalWrite(GPIO_ENABLE_MOTEURS, HIGH);
 #endif
+
+while (!lox.begin()) {
+    Serial.println(F("Failed to boot VL53L0X"));
+    delay(1000);
+  }
+   lox.startRangeContinuous();
+  
 }
 
  int green = 0;
@@ -154,9 +166,13 @@ void loop()
     pixels.setPixelColor(4, pixels.Color(0, 0, 0));
     pixels.show();
 
-    green += 1;
+    green += 10;
     green = green % 255;
 
+     if (lox.isRangeComplete()) {
+    Serial.print("Distance in mm: ");
+    Serial.println(lox.readRange());
+     }
   }
 
 #if MOTORS_ACTIVE == 1
