@@ -22,6 +22,8 @@ public:
     int getPositionSteps(void);
     void setPositionSteps(int position_steps);
 
+    float getPositionDegrees(void);
+
 private:
     int pin_direction;
     int pin_step;
@@ -35,7 +37,7 @@ private:
     int ratio;
 
     int position_steps; // microsteps = 16 x steps
-    int position_degrees;
+    float position_degrees;
 
     float target_speed_degrees_per_second;
 

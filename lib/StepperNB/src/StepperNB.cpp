@@ -146,9 +146,15 @@ int StepperNB::version(void)
 void StepperNB::setPositionSteps(int position_steps)
 {
     this->position_steps = position_steps;
+    this->position_degrees = this->position_steps / 16.0 * 360.0 / this->number_of_steps;
 }
 
 int StepperNB::getPositionSteps(void)
 {
     return this->position_steps;
+}
+
+float StepperNB::getPositionDegrees(void)
+{
+    return this->position_degrees;
 }

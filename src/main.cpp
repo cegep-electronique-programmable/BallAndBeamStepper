@@ -187,7 +187,7 @@ void loop()
     }
     */
 
-    Serial.println(moteur_droit.getPositionSteps());
+    Serial.println(moteur_droit.getPositionDegrees());
 
   }
 
