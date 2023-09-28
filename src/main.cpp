@@ -133,6 +133,14 @@ void setup()
     delay(1000);
   }
   lox.startRangeContinuous();
+
+  // Éteindre toutes les LEDs
+  pixels.setPixelColor(0, pixels.Color(0, 0, 0));
+  pixels.setPixelColor(1, pixels.Color(0, 0, 0));
+  pixels.setPixelColor(2, pixels.Color(0, 0, 0));
+  pixels.setPixelColor(3, pixels.Color(0, 0, 0));
+  pixels.setPixelColor(4, pixels.Color(0, 0, 0));
+  pixels.show();
 }
 
 int green = 0;
@@ -151,12 +159,7 @@ void loop()
   {
     previousMillisControlLoop = currentMillis;
 
-    pixels.setPixelColor(0, pixels.Color(0, green, 0));
-    pixels.setPixelColor(1, pixels.Color(0, 0, 0));
-    pixels.setPixelColor(2, pixels.Color(0, 0, 0));
-    pixels.setPixelColor(3, pixels.Color(0, 0, 0));
-    pixels.setPixelColor(4, pixels.Color(0, 0, 0));
-    pixels.show();
+    
 
     green += 10;
     green = green % 255;
