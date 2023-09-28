@@ -101,11 +101,11 @@ Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 // ***************  CONTROL  *************** //
 unsigned long previousMillisControlLoop;
 
-#define KP -1.20
-#define KI -0.82
-#define KD -0.1
+#define KP 5
+#define KI 0
+#define KD 0
 
-float dt = 10;
+float dt = 0.01;
 uint8_t anti_windup = 0;
 /********************************************/
 
@@ -170,11 +170,15 @@ void loop()
   {
     previousMillisControlLoop = currentMillis;
 
-    if (moteur_droit.getPositionDegrees() > 18 && moteur_droit.getPositionDegrees() < 22)
-      moteur_droit.setTargetPositionDegrees(10);
-    else 
-      moteur_droit.setTargetPositionDegrees(20);
+    while (!lox.isRangeComplete());
 
+    float distance_mm = lox.readRange();
+    float error = 350 - distance_mm;
+
+    float P = KP * error;
+
+    moteur_droit.setTargetPositionDegrees(P);
+    
     green += 10;
     green = green % 255;
 
@@ -187,13 +191,14 @@ void loop()
     }
     */
 
-    Serial.println(moteur_droit.getPositionDegrees());
+    //Serial.println(moteur_droit.getPositionDegrees());
 
   }
+  /*
   Serial.print(moteur_droit.getTargetPositionDegrees());
   Serial.print(" ");
   Serial.print(moteur_droit.getPositionDegrees());
   Serial.print(" ");
   Serial.println(moteur_droit.getSpeed());
-
+  */
 }
