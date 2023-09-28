@@ -20,7 +20,17 @@ StepperNB::StepperNB(int pin_direction, int pin_step, int pin_ms1, int pin_ms2, 
     this->target_speed_degrees_per_second = 0;
     this->target_position_degrees = 0;
 
-    this->acceleration_max_degrees_per_second2 = 300.0;
+    this->acceleration_max_degrees_per_second2 = 10.0;
+
+    this->position_error = 0;
+    this->position_error_sum = 0;
+    this->position_error_previous = 0;
+    this->position_error_derivative = 0;
+    this->position_error_dt = 0;
+    this->position_error_dt_previous = micros();
+    this->position_kp = 1.0;
+    this->position_ki = 0.5;
+    this->position_kd = 0.01;
 }
 
 float StepperNB::getSpeed(void) {
@@ -28,17 +38,41 @@ float StepperNB::getSpeed(void) {
 }
 
 void StepperNB::computeSpeed(void) {
+    // Compute dt
+    this->position_error_dt = (micros() - this->position_error_dt_previous) / 1000000.0;
+    this->position_error_dt_previous = micros();
 
-    float position_error = this->target_position_degrees - this->position_degrees;
-    float target_speed = 1 * position_error;
+    // Compute error
+    this->position_error = this->target_position_degrees - this->position_degrees;
 
+    if (abs(position_error) < 0.5) {
+        this->position_error = 0;
+    }
+
+    // Compute integral
+    this->position_error_sum += position_error * this->position_error_dt;
+
+    // Compute derivative
+    this->position_error_derivative = (this->position_error - this->position_error_previous) / this->position_error_dt;
+
+    // Compute PID
+    float target_speed = this->position_kp * position_error + this->position_ki * this->position_error_sum + this->position_kd * this->position_error_derivative;
+
+    // Saturation
     if (target_speed > this->getSpeed() + this->acceleration_max_degrees_per_second2) {
         target_speed = this->getSpeed() + this->acceleration_max_degrees_per_second2;
     }
-    else if (target_speed < -this->acceleration_max_degrees_per_second2) {
-        target_speed = -this->acceleration_max_degrees_per_second2;
+    else if (target_speed < this->getSpeed() - this->acceleration_max_degrees_per_second2) {
+        target_speed = this->getSpeed() - this->acceleration_max_degrees_per_second2;
     }
-    
+
+    // Vitesse minimale
+    /*
+    if (target_speed > 0 && target_speed < 5)
+        target_speed = 5;
+    if (target_speed < 0 && target_speed > -5)
+        target_speed = -5;
+    */
     this->setSpeed(target_speed);
 }
 
@@ -180,4 +214,9 @@ float StepperNB::getPositionDegrees(void)
 void StepperNB::setTargetPositionDegrees(float target_position_degrees)
 {
     this->target_position_degrees = target_position_degrees;
+}
+
+float StepperNB::getTargetPositionDegrees()
+{
+    return this->target_position_degrees;
 }

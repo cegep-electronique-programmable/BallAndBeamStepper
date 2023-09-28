@@ -105,7 +105,7 @@ unsigned long previousMillisControlLoop;
 #define KI -0.82
 #define KD -0.1
 
-float dt = 5;
+float dt = 10;
 uint8_t anti_windup = 0;
 /********************************************/
 
@@ -170,10 +170,10 @@ void loop()
   {
     previousMillisControlLoop = currentMillis;
 
-    if (moteur_droit.getPositionDegrees() > 85 && moteur_droit.getPositionDegrees() < 95)
-      moteur_droit.setTargetPositionDegrees(0);
+    if (moteur_droit.getPositionDegrees() > 18 && moteur_droit.getPositionDegrees() < 22)
+      moteur_droit.setTargetPositionDegrees(10);
     else 
-      moteur_droit.setTargetPositionDegrees(90);
+      moteur_droit.setTargetPositionDegrees(20);
 
     green += 10;
     green = green % 255;
@@ -190,5 +190,10 @@ void loop()
     Serial.println(moteur_droit.getPositionDegrees());
 
   }
+  Serial.print(moteur_droit.getTargetPositionDegrees());
+  Serial.print(" ");
+  Serial.print(moteur_droit.getPositionDegrees());
+  Serial.print(" ");
+  Serial.println(moteur_droit.getSpeed());
 
 }

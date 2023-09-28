@@ -25,7 +25,8 @@ public:
     float getPositionDegrees(void);
 
     void setTargetPositionDegrees(float target_position_degrees);
-
+    float getTargetPositionDegrees();
+    
     void computeSpeed(void);
 
 private:
@@ -49,6 +50,17 @@ private:
     int timer_period;
 
     float acceleration_max_degrees_per_second2;
+
+    float position_error;
+    float position_error_sum;
+    float position_error_previous;
+    float position_error_derivative;
+    float position_error_dt;
+    float position_error_dt_previous;
+    float position_kp;
+    float position_ki;
+    float position_kd;
+    
 };
 
 #endif
