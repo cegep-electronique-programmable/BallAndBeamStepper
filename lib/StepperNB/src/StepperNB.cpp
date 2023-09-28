@@ -18,10 +18,28 @@ StepperNB::StepperNB(int pin_direction, int pin_step, int pin_ms1, int pin_ms2, 
     this->position_degrees = 0;
 
     this->target_speed_degrees_per_second = 0;
+    this->target_position_degrees = 0;
+
+    this->acceleration_max_degrees_per_second2 = 300.0;
 }
 
 float StepperNB::getSpeed(void) {
     return this->target_speed_degrees_per_second;
+}
+
+void StepperNB::computeSpeed(void) {
+
+    float position_error = this->target_position_degrees - this->position_degrees;
+    float target_speed = 1 * position_error;
+
+    if (target_speed > this->getSpeed() + this->acceleration_max_degrees_per_second2) {
+        target_speed = this->getSpeed() + this->acceleration_max_degrees_per_second2;
+    }
+    else if (target_speed < -this->acceleration_max_degrees_per_second2) {
+        target_speed = -this->acceleration_max_degrees_per_second2;
+    }
+    
+    this->setSpeed(target_speed);
 }
 
 void StepperNB::setSpeed(float target_speed_degrees_per_second)
@@ -157,4 +175,9 @@ int StepperNB::getPositionSteps(void)
 float StepperNB::getPositionDegrees(void)
 {
     return this->position_degrees;
+}
+
+void StepperNB::setTargetPositionDegrees(float target_position_degrees)
+{
+    this->target_position_degrees = target_position_degrees;
 }

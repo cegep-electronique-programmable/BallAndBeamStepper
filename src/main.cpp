@@ -64,6 +64,8 @@ void IRAM_ATTR Timer3_MoteurD_ISR()
   portENTER_CRITICAL(&timerMux);
   noInterrupts();
 
+  moteur_droit.computeSpeed();
+
   uint64_t delay = moteur_droit.getTimerPeriod();
   if (delay > 100000)
   {
@@ -103,7 +105,7 @@ unsigned long previousMillisControlLoop;
 #define KI -0.82
 #define KD -0.1
 
-float dt = 0.1;
+float dt = 5;
 uint8_t anti_windup = 0;
 /********************************************/
 
@@ -168,12 +170,10 @@ void loop()
   {
     previousMillisControlLoop = currentMillis;
 
-
-    if (moteur_droit.getPositionSteps() < 90*20*16/36) 
-      moteur_droit.setSpeed(90);
-    else
-      moteur_droit.setSpeed(0);
-    
+    if (moteur_droit.getPositionDegrees() > 85 && moteur_droit.getPositionDegrees() < 95)
+      moteur_droit.setTargetPositionDegrees(0);
+    else 
+      moteur_droit.setTargetPositionDegrees(90);
 
     green += 10;
     green = green % 255;

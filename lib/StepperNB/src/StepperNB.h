@@ -24,6 +24,10 @@ public:
 
     float getPositionDegrees(void);
 
+    void setTargetPositionDegrees(float target_position_degrees);
+
+    void computeSpeed(void);
+
 private:
     int pin_direction;
     int pin_step;
@@ -40,8 +44,11 @@ private:
     float position_degrees;
 
     float target_speed_degrees_per_second;
+    float target_position_degrees;
 
     int timer_period;
+
+    float acceleration_max_degrees_per_second2;
 };
 
 #endif
