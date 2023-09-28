@@ -101,8 +101,8 @@ Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 // ***************  CONTROL  *************** //
 unsigned long previousMillisControlLoop;
 
-#define KP 5
-#define KI 0
+#define KP 0.05
+#define KI 0.01
 #define KD 0
 
 float dt = 0.01;
@@ -155,6 +155,7 @@ void setup()
 }
 
 int green = 0;
+float error_sum = 0;
 
 // ***************  LOOP  *************** //
 void loop()
@@ -174,10 +175,18 @@ void loop()
 
     float distance_mm = lox.readRange();
     float error = 350 - distance_mm;
+    error_sum += error * dt;
 
-    float P = KP * error;
+    float position = KP * error + KI * error_sum;
 
-    moteur_droit.setTargetPositionDegrees(P);
+    moteur_droit.setTargetPositionDegrees(position);
+
+    // Afficher la distance, l'erreur et la position
+    Serial.print(distance_mm);
+    Serial.print(" ");
+    Serial.print(error);
+    Serial.print(" ");
+    Serial.println(position);
     
     green += 10;
     green = green % 255;
