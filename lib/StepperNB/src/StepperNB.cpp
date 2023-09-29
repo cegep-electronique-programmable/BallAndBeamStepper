@@ -28,7 +28,7 @@ StepperNB::StepperNB(int pin_direction, int pin_step, int pin_ms1, int pin_ms2, 
     this->position_error_derivative = 0;
     this->position_error_dt = 0;
     this->position_error_dt_previous = micros();
-    this->position_kp = 1.0;
+    this->position_kp = 1.5;
     this->position_ki = 0.5;
     this->position_kd = 0.01;
 }
@@ -61,9 +61,11 @@ void StepperNB::computeSpeed(void) {
     // Saturation
     if (target_speed > this->getSpeed() + this->acceleration_max_degrees_per_second2) {
         target_speed = this->getSpeed() + this->acceleration_max_degrees_per_second2;
+        this->position_error_sum = 0;
     }
     else if (target_speed < this->getSpeed() - this->acceleration_max_degrees_per_second2) {
         target_speed = this->getSpeed() - this->acceleration_max_degrees_per_second2;
+        this->position_error_sum = 0;
     }
 
     // Vitesse minimale
