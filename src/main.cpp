@@ -101,13 +101,15 @@ Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 // ***************  CONTROL  *************** //
 unsigned long previousMillisControlLoop;
 
+#define POSITION_CENTRALE_MM 470
 #define KP 0.05
 #define KI 0.0
-#define KD 0.0
+#define KD 0.0025
 #define ANGLE_OFFSET 28
 
 float dt = 0.01;
 float error_sum = 0;
+float error_previous = 0;
 uint8_t anti_windup = 0;
 /********************************************/
 
@@ -210,12 +212,11 @@ void loop()
 
   float distance_mm = 0;
   float error = 0;
-  float error_previous = 0;
   float error_delta = 0;
   float position = 0;
-  float P = 0;
-  float I = 0;
-  float D = 0;
+  float propotionnal = 0;
+  float integral = 0;
+  float derivative = 0;
 
   // Boucle de controle de la vitesse horizontale
   unsigned long currentMillis = millis();
@@ -227,19 +228,26 @@ void loop()
     while (!lox.isRangeComplete());
 
     distance_mm = lox.readRange();
-    error = 380 - distance_mm;
+    error = POSITION_CENTRALE_MM - distance_mm;
     error_sum += error * dt;
     error_delta = (error - error_previous) / dt;
+    //printf("%6.2f\n", error_delta);
     error_previous = error;
 
-    P = KP * error;
-    I = KI * error_sum;
-    D = KD * error_delta;
+    propotionnal = KP * error;
+    integral = KI * error_sum;
+    derivative = KD * error_delta;
 
-    position = P + I + D;
+    position = propotionnal + integral + derivative;
 
-    position = position < -25 ? -25 : position;
-    position = position > 45 ? 45 : position;
+    if (position < -25) {
+      position = -25;
+      error_sum = 0;
+    }
+    else if (position > 45) {
+      position = 45;
+      error_sum = 0;
+    }
     
     
     moteur_droit.setTargetPositionDegrees(position + ANGLE_OFFSET);
@@ -253,7 +261,7 @@ void loop()
     previousMillisDisplayLoop = currentMillis;
 
     // Afficher la distance, l'erreur et la position
-    
+    /*
     Serial.print(distance_mm);
     Serial.print(" ");
     Serial.print(error);
@@ -268,9 +276,18 @@ void loop()
     Serial.print(moteur_droit.getPositionDegrees());
     Serial.print(" ");
     Serial.println(moteur_droit.getSpeed());
-    
+    */
 
-    // Afficher les valeurs de P, I et D
+    // Afficher les valeurs de P, I et D avec la fonction printf
+    //printf("%5.1f, %5.1f, %5.1f, %5.1f, %5.1f, %5.1f\n", distance_mm, error, P, I, D, position);
+    //printf("P @ %d = %8.2f, D @ %d = %8.2f", &P, P, &D, D);
+    
+    // Afficher P et D
+    Serial.print(propotionnal);
+    Serial.print(" ");
+    Serial.println(derivative);
+
+
     /*
     Serial.print(position);
     Serial.print(" ");
