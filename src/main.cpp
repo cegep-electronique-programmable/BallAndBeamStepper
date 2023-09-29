@@ -231,7 +231,6 @@ void loop()
     error = POSITION_CENTRALE_MM - distance_mm;
     error_sum += error * dt;
     error_delta = (error - error_previous) / dt;
-    //printf("%6.2f\n", error_delta);
     error_previous = error;
 
     propotionnal = KP * error;
@@ -281,11 +280,7 @@ void loop()
     // Afficher les valeurs de P, I et D avec la fonction printf
     //printf("%5.1f, %5.1f, %5.1f, %5.1f, %5.1f, %5.1f\n", distance_mm, error, P, I, D, position);
     //printf("P @ %d = %8.2f, D @ %d = %8.2f", &P, P, &D, D);
-    
-    // Afficher P et D
-    Serial.print(propotionnal);
-    Serial.print(" ");
-    Serial.println(derivative);
+
 
 
     /*
@@ -304,25 +299,25 @@ void loop()
     pixels.setPixelColor(3, pixels.Color(0, 0, 0));
     pixels.setPixelColor(4, pixels.Color(0, 0, 0));
 
-    if (abs(error) < 10)
+    if (abs(error) < 25)
     {
       pixels.setPixelColor(2, pixels.Color(0, 128, 0));
     }
-    else if (error >= 10 && error <= 100)
+    else if (error >= 25 && error <= 200)
     {
-      pixels.setPixelColor(1, pixels.Color(0, 128, 0));
+      pixels.setPixelColor(1, pixels.Color(255, 165, 0));
     }
-    else if (error <= -10 && error >= -100)
+    else if (error <= -25 && error >= -200)
     {
-      pixels.setPixelColor(3, pixels.Color(0, 128, 0));
+      pixels.setPixelColor(3, pixels.Color(255, 165, 0));
     }
-    else if (error > 100)
+    else if (error > 200)
     {
-      pixels.setPixelColor(0, pixels.Color(0, 128, 0));
+      pixels.setPixelColor(0, pixels.Color(128, 0, 0));
     }
-    else if (error < -100)
+    else if (error < -200)
     {
-      pixels.setPixelColor(4, pixels.Color(0, 128, 0));
+      pixels.setPixelColor(4, pixels.Color(128, 0, 0));
     }
 
     pixels.show();
