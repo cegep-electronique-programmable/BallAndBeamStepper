@@ -69,9 +69,15 @@ void StepperNB::computeSpeed(void) {
     }
 
     #define MAX_SPEED_DEG_SEC 1080
-    target_speed = target_speed > MAX_SPEED_DEG_SEC ? MAX_SPEED_DEG_SEC : target_speed;
-    target_speed = target_speed < -MAX_SPEED_DEG_SEC ? -MAX_SPEED_DEG_SEC : target_speed;
-
+    if (target_speed > MAX_SPEED_DEG_SEC) {
+        target_speed = MAX_SPEED_DEG_SEC;
+        this->position_error_sum = 0;
+    }
+    else if (target_speed < -MAX_SPEED_DEG_SEC) {
+        target_speed = -MAX_SPEED_DEG_SEC;
+        this->position_error_sum = 0;
+    }
+    
     // Vitesse minimale
     /*
     if (target_speed > 0 && target_speed < 5)
@@ -220,6 +226,7 @@ float StepperNB::getPositionDegrees(void)
 void StepperNB::setTargetPositionDegrees(float target_position_degrees)
 {
     this->target_position_degrees = target_position_degrees;
+    this->position_error_sum = 0;
 }
 
 float StepperNB::getTargetPositionDegrees()
