@@ -241,6 +241,7 @@ void loop()
     position = position < -25 ? -25 : position;
     position = position > 45 ? 45 : position;
     
+    
     moteur_droit.setTargetPositionDegrees(position + ANGLE_OFFSET);
     moteur_droit.computeSpeed();
   }
@@ -252,28 +253,33 @@ void loop()
     previousMillisDisplayLoop = currentMillis;
 
     // Afficher la distance, l'erreur et la position
-    /*
+    
     Serial.print(distance_mm);
     Serial.print(" ");
     Serial.print(error);
     Serial.print(" ");
-    Serial.println(position);
-    */
+    Serial.print(position);
+    Serial.print(" ");
+    
 
-    /*
+    
     Serial.print(moteur_droit.getTargetPositionDegrees());
     Serial.print(" ");
     Serial.print(moteur_droit.getPositionDegrees());
     Serial.print(" ");
     Serial.println(moteur_droit.getSpeed());
-    */
+    
 
     // Afficher les valeurs de P, I et D
+    /*
+    Serial.print(position);
+    Serial.print(" ");
     Serial.print(P);
     Serial.print(" ");
     Serial.print(I);
     Serial.print(" ");
     Serial.println(D);
+    */
 
     pixels.setPixelColor(0, pixels.Color(0, 0, 0));
     pixels.setPixelColor(1, pixels.Color(0, 0, 0));
