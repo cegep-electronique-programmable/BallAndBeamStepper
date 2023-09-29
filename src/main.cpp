@@ -124,7 +124,28 @@ void setup()
   initilisation_reussie += initialisationI2C();
   initilisation_reussie += initialisationSPI();
 
+  pixels.setPixelColor(0, pixels.Color(255, 0, 0));
+  pixels.setPixelColor(1, pixels.Color(0, 0, 0));
+  pixels.setPixelColor(2, pixels.Color(0, 0, 0));
+  pixels.setPixelColor(3, pixels.Color(0, 0, 0));
+  pixels.setPixelColor(4, pixels.Color(0, 0, 0));
+  pixels.show();
+
+  while (!lox.begin())
+  {
+    Serial.println(F("Failed to boot VL53L0X"));
+    delay(1000);
+  }
+  lox.startRangeContinuous();
+
 #if MOTORS_ACTIVE == 1
+  pixels.setPixelColor(0, pixels.Color(255, 0, 0));
+  pixels.setPixelColor(1, pixels.Color(255, 0, 0));
+  pixels.setPixelColor(2, pixels.Color(0, 0, 0));
+  pixels.setPixelColor(3, pixels.Color(0, 0, 0));
+  pixels.setPixelColor(4, pixels.Color(0, 0, 0));
+  pixels.show();
+
   moteur_droit.setSpeed(0);
   moteur_droit.setRatio(16);
 
@@ -138,22 +159,37 @@ void setup()
   digitalWrite(GPIO_ENABLE_MOTEURS, HIGH);
 
   delay(2000);
-  
+
+  pixels.setPixelColor(0, pixels.Color(255, 0, 0));
+  pixels.setPixelColor(1, pixels.Color(255, 0, 0));
+  pixels.setPixelColor(2, pixels.Color(255, 0, 0));
+  pixels.setPixelColor(3, pixels.Color(0, 0, 0));
+  pixels.setPixelColor(4, pixels.Color(0, 0, 0));
+  pixels.show();
   digitalWrite(GPIO_ENABLE_MOTEURS, LOW);
 
   // Se deplacer a l'horizontal avant de commencer
   moteur_droit.setTargetPositionDegrees(28);
+
+  unsigned long startMillis = millis();
+  while (millis() - startMillis < 2000)
+  {
+    moteur_droit.computeSpeed();
+    delay(100);
+  }
+
+  pixels.setPixelColor(0, pixels.Color(0, 255, 0));
+  pixels.setPixelColor(1, pixels.Color(0, 255, 0));
+  pixels.setPixelColor(2, pixels.Color(0, 255, 0));
+  pixels.setPixelColor(3, pixels.Color(0, 255, 0));
+  pixels.setPixelColor(4, pixels.Color(0, 255, 0));
+  pixels.show();
+
+  delay(1000);
 #else
   // Disable motors
   digitalWrite(GPIO_ENABLE_MOTEURS, HIGH);
 #endif
-
-  while (!lox.begin())
-  {
-    Serial.println(F("Failed to boot VL53L0X"));
-    delay(1000);
-  }
-  lox.startRangeContinuous();
 
   // Éteindre toutes les LEDs
   pixels.setPixelColor(0, pixels.Color(0, 0, 0));
@@ -183,18 +219,18 @@ void loop()
   if (currentMillis - previousMillisControlLoop >= dt * 1000)
   {
     previousMillisControlLoop = currentMillis;
-    /*
+    
     while (!lox.isRangeComplete());
 
     distance_mm = lox.readRange();
     error = 380 - distance_mm;
-    error_sum += error * dt;
+    /*error_sum += error * dt;
     error_delta = (error - error_previous) / dt;
     error_previous = error;
 
     position = KP * error + KI * error_sum + KD * error_delta;
     */
-    //moteur_droit.setTargetPositionDegrees(position);
+    // moteur_droit.setTargetPositionDegrees(position);
     moteur_droit.computeSpeed();
   }
 
@@ -212,13 +248,12 @@ void loop()
     Serial.print(" ");
     Serial.println(position);
     */
-    
+
     Serial.print(moteur_droit.getTargetPositionDegrees());
     Serial.print(" ");
     Serial.print(moteur_droit.getPositionDegrees());
     Serial.print(" ");
     Serial.println(moteur_droit.getSpeed());
-    
 
     pixels.setPixelColor(0, pixels.Color(0, 0, 0));
     pixels.setPixelColor(1, pixels.Color(0, 0, 0));
@@ -226,22 +261,27 @@ void loop()
     pixels.setPixelColor(3, pixels.Color(0, 0, 0));
     pixels.setPixelColor(4, pixels.Color(0, 0, 0));
 
-    if (abs(error) < 10) {
+    if (abs(error) < 10)
+    {
       pixels.setPixelColor(2, pixels.Color(0, 128, 0));
     }
-    else if (error >= 10 && error <= 100) {
+    else if (error >= 10 && error <= 100)
+    {
       pixels.setPixelColor(1, pixels.Color(0, 128, 0));
     }
-    else if (error <= -10 && error >= -100) {
+    else if (error <= -10 && error >= -100)
+    {
       pixels.setPixelColor(3, pixels.Color(0, 128, 0));
     }
-    else if (error > 100) {
+    else if (error > 100)
+    {
       pixels.setPixelColor(0, pixels.Color(0, 128, 0));
     }
-    else if (error < -100) {
+    else if (error < -100)
+    {
       pixels.setPixelColor(4, pixels.Color(0, 128, 0));
     }
-    
+
     pixels.show();
   }
 }
