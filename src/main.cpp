@@ -102,8 +102,9 @@ Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 unsigned long previousMillisControlLoop;
 
 #define KP 0.05
-#define KI 0.01
-#define KD 0.005
+#define KI 0.0
+#define KD 0.0
+#define ANGLE_OFFSET 28
 
 float dt = 0.01;
 float error_sum = 0;
@@ -169,7 +170,7 @@ void setup()
   digitalWrite(GPIO_ENABLE_MOTEURS, LOW);
 
   // Se deplacer a l'horizontal avant de commencer
-  moteur_droit.setTargetPositionDegrees(28);
+  moteur_droit.setTargetPositionDegrees(ANGLE_OFFSET);
 
   unsigned long startMillis = millis();
   while (millis() - startMillis < 2000)
@@ -212,6 +213,9 @@ void loop()
   float error_previous = 0;
   float error_delta = 0;
   float position = 0;
+  float P = 0;
+  float I = 0;
+  float D = 0;
 
   // Boucle de controle de la vitesse horizontale
   unsigned long currentMillis = millis();
@@ -224,13 +228,20 @@ void loop()
 
     distance_mm = lox.readRange();
     error = 380 - distance_mm;
-    /*error_sum += error * dt;
+    error_sum += error * dt;
     error_delta = (error - error_previous) / dt;
     error_previous = error;
 
-    position = KP * error + KI * error_sum + KD * error_delta;
-    */
-    // moteur_droit.setTargetPositionDegrees(position);
+    P = KP * error;
+    I = KI * error_sum;
+    D = KD * error_delta;
+
+    position = P + I + D;
+
+    position = position < -25 ? -25 : position;
+    position = position > 45 ? 45 : position;
+    
+    moteur_droit.setTargetPositionDegrees(position + ANGLE_OFFSET);
     moteur_droit.computeSpeed();
   }
 
@@ -249,11 +260,20 @@ void loop()
     Serial.println(position);
     */
 
+    /*
     Serial.print(moteur_droit.getTargetPositionDegrees());
     Serial.print(" ");
     Serial.print(moteur_droit.getPositionDegrees());
     Serial.print(" ");
     Serial.println(moteur_droit.getSpeed());
+    */
+
+    // Afficher les valeurs de P, I et D
+    Serial.print(P);
+    Serial.print(" ");
+    Serial.print(I);
+    Serial.print(" ");
+    Serial.println(D);
 
     pixels.setPixelColor(0, pixels.Color(0, 0, 0));
     pixels.setPixelColor(1, pixels.Color(0, 0, 0));
