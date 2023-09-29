@@ -229,6 +229,9 @@ void loop()
 
     distance_mm = lox.readRange();
     error = POSITION_CENTRALE_MM - distance_mm;
+
+    // TODO: Ajouter un filtre passe bas sur l'erreur
+
     error_sum += error * dt;
     error_delta = (error - error_previous) / dt;
     error_previous = error;
