@@ -206,6 +206,16 @@ void setup()
 // ***************  LOOP  *************** //
 void loop()
 {
+  unsigned long startMicros, endMicros;
+  while(1) 
+  {
+    startMicros = micros();
+    while (!lox.isRangeComplete());
+    uint16_t distance_mm = lox.readRange();
+    endMicros = micros();
+    printf("%d, %d\n", distance_mm, endMicros - startMicros);
+  }
+
 #if OTA_ACTIVE == 1
   ArduinoOTA.handle();
 #endif
