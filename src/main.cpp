@@ -101,9 +101,9 @@ Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 // ***************  CONTROL  *************** //
 unsigned long previousMillisControlLoop;
 
-#define POSITION_CENTRALE_MM 470
+#define POSITION_CENTRALE_MM 270
 #define KP 0.05
-#define KI 0.008
+#define KI 0.038
 #define KD 0.0025
 #define ANGLE_OFFSET 28
 
@@ -217,6 +217,7 @@ void loop()
   float propotionnal = 0;
   float integral = 0;
   float derivative = 0;
+  float previsous_micros = micros();
 
   // Boucle de controle de la vitesse horizontale
   unsigned long currentMillis = millis();
@@ -225,13 +226,19 @@ void loop()
   {
     previousMillisControlLoop = currentMillis;
     
-    while (!lox.isRangeComplete());
-
-    distance_mm = lox.readRange();
+    // Filtre passe bas sur l'erreur
+    distance_mm = 0;
+    for (int i = 0; i < 3; i++) 
+    {
+      while (!lox.isRangeComplete());
+      distance_mm += lox.readRange();
+    }
+    distance_mm = distance_mm/3;
     error = POSITION_CENTRALE_MM - distance_mm;
 
-    // TODO: Ajouter un filtre passe bas sur l'erreur
-
+    float current_micros = micros();
+    float current_dt = (current_micros - previsous_micros) / 1000000.0;
+    previsous_micros = micros();
     error_sum += error * dt;
     error_delta = (error - error_previous) / dt;
     error_previous = error;
@@ -306,15 +313,15 @@ void loop()
     pixels.setPixelColor(3, pixels.Color(0, 0, 0));
     pixels.setPixelColor(4, pixels.Color(0, 0, 0));
 
-    if (abs(error) < 25)
+    if (abs(error) < 50)
     {
       pixels.setPixelColor(2, pixels.Color(0, 128, 0));
     }
-    else if (error >= 25 && error <= 200)
+    else if (error >= 50 && error <= 200)
     {
       pixels.setPixelColor(1, pixels.Color(255, 165, 0));
     }
-    else if (error <= -25 && error >= -200)
+    else if (error <= -50 && error >= -200)
     {
       pixels.setPixelColor(3, pixels.Color(255, 165, 0));
     }
