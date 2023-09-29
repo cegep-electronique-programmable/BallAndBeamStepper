@@ -20,7 +20,7 @@ StepperNB::StepperNB(int pin_direction, int pin_step, int pin_ms1, int pin_ms2, 
     this->target_speed_degrees_per_second = 0;
     this->target_position_degrees = 0;
 
-    this->acceleration_max_degrees_per_second2 = 10.0;
+    this->acceleration_max_degrees_per_second2 = 100.0;
 
     this->position_error = 0;
     this->position_error_sum = 0;
