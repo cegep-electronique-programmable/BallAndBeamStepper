@@ -103,7 +103,7 @@ unsigned long previousMillisControlLoop;
 
 #define POSITION_CENTRALE_MM 470
 #define KP 0.05
-#define KI 0.0
+#define KI 0.008
 #define KD 0.0025
 #define ANGLE_OFFSET 28
 
@@ -258,6 +258,10 @@ void loop()
   if (currentMillis - previousMillisDisplayLoop >= 100)
   {
     previousMillisDisplayLoop = currentMillis;
+
+    // Affiche propotionnal, integral et derivative avec un printf
+    printf("%5.1f, %5.1f, %5.1f\n", propotionnal, integral, derivative);
+
 
     // Afficher la distance, l'erreur et la position
     /*
