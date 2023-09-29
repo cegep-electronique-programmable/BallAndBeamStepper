@@ -64,8 +64,6 @@ void IRAM_ATTR Timer3_MoteurD_ISR()
   portENTER_CRITICAL(&timerMux);
   noInterrupts();
 
-  moteur_droit.computeSpeed();
-
   uint64_t delay = moteur_droit.getTimerPeriod();
   if (delay > 100000)
   {
@@ -77,11 +75,13 @@ void IRAM_ATTR Timer3_MoteurD_ISR()
     delayMicroseconds(2);
     digitalWrite(GPIO_STEP_D, LOW);
 
-    if (moteur_droit.getDirection() == 1) {
-      moteur_droit.setPositionSteps(moteur_droit.getPositionSteps() - 16/moteur_droit.getRatio());
+    if (moteur_droit.getDirection() == 1)
+    {
+      moteur_droit.setPositionSteps(moteur_droit.getPositionSteps() - 16 / moteur_droit.getRatio());
     }
-    else {
-      moteur_droit.setPositionSteps(moteur_droit.getPositionSteps() + 16/moteur_droit.getRatio());
+    else
+    {
+      moteur_droit.setPositionSteps(moteur_droit.getPositionSteps() + 16 / moteur_droit.getRatio());
     }
   }
 
@@ -103,10 +103,15 @@ unsigned long previousMillisControlLoop;
 
 #define KP 0.05
 #define KI 0.01
-#define KD 0
+#define KD 0.005
 
 float dt = 0.01;
+float error_sum = 0;
 uint8_t anti_windup = 0;
+/********************************************/
+
+// ***************  DISPLAY  *************** //
+unsigned long previousMillisDisplayLoop;
 /********************************************/
 
 // ***************  SETUP  *************** //
@@ -130,7 +135,14 @@ void setup()
 
   // Enable motors
   pinMode(GPIO_ENABLE_MOTEURS, OUTPUT);
+  digitalWrite(GPIO_ENABLE_MOTEURS, HIGH);
+
+  delay(2000);
+  
   digitalWrite(GPIO_ENABLE_MOTEURS, LOW);
+
+  // Se deplacer a l'horizontal avant de commencer
+  moteur_droit.setTargetPositionDegrees(28);
 #else
   // Disable motors
   digitalWrite(GPIO_ENABLE_MOTEURS, HIGH);
@@ -150,12 +162,7 @@ void setup()
   pixels.setPixelColor(3, pixels.Color(0, 0, 0));
   pixels.setPixelColor(4, pixels.Color(0, 0, 0));
   pixels.show();
-
-  
 }
-
-int green = 0;
-float error_sum = 0;
 
 // ***************  LOOP  *************** //
 void loop()
@@ -164,50 +171,77 @@ void loop()
   ArduinoOTA.handle();
 #endif
 
+  float distance_mm = 0;
+  float error = 0;
+  float error_previous = 0;
+  float error_delta = 0;
+  float position = 0;
+
   // Boucle de controle de la vitesse horizontale
   unsigned long currentMillis = millis();
 
   if (currentMillis - previousMillisControlLoop >= dt * 1000)
   {
     previousMillisControlLoop = currentMillis;
-
+    /*
     while (!lox.isRangeComplete());
 
-    float distance_mm = lox.readRange();
-    float error = 350 - distance_mm;
+    distance_mm = lox.readRange();
+    error = 380 - distance_mm;
     error_sum += error * dt;
+    error_delta = (error - error_previous) / dt;
+    error_previous = error;
 
-    float position = KP * error + KI * error_sum;
+    position = KP * error + KI * error_sum + KD * error_delta;
+    */
+    //moteur_droit.setTargetPositionDegrees(position);
+    moteur_droit.computeSpeed();
+  }
 
-    moteur_droit.setTargetPositionDegrees(position);
+  currentMillis = millis();
+
+  if (currentMillis - previousMillisDisplayLoop >= 100)
+  {
+    previousMillisDisplayLoop = currentMillis;
 
     // Afficher la distance, l'erreur et la position
+    /*
     Serial.print(distance_mm);
     Serial.print(" ");
     Serial.print(error);
     Serial.print(" ");
     Serial.println(position);
-    
-    green += 10;
-    green = green % 255;
-
-    /*
-    // Section pour tester le capteur
-    if (lox.isRangeComplete())
-    {
-      Serial.print("Distance in mm: ");
-      Serial.println(lox.readRange());
-    }
     */
+    
+    Serial.print(moteur_droit.getTargetPositionDegrees());
+    Serial.print(" ");
+    Serial.print(moteur_droit.getPositionDegrees());
+    Serial.print(" ");
+    Serial.println(moteur_droit.getSpeed());
+    
 
-    //Serial.println(moteur_droit.getPositionDegrees());
+    pixels.setPixelColor(0, pixels.Color(0, 0, 0));
+    pixels.setPixelColor(1, pixels.Color(0, 0, 0));
+    pixels.setPixelColor(2, pixels.Color(0, 0, 0));
+    pixels.setPixelColor(3, pixels.Color(0, 0, 0));
+    pixels.setPixelColor(4, pixels.Color(0, 0, 0));
 
+    if (abs(error) < 10) {
+      pixels.setPixelColor(2, pixels.Color(0, 128, 0));
+    }
+    else if (error >= 10 && error <= 100) {
+      pixels.setPixelColor(1, pixels.Color(0, 128, 0));
+    }
+    else if (error <= -10 && error >= -100) {
+      pixels.setPixelColor(3, pixels.Color(0, 128, 0));
+    }
+    else if (error > 100) {
+      pixels.setPixelColor(0, pixels.Color(0, 128, 0));
+    }
+    else if (error < -100) {
+      pixels.setPixelColor(4, pixels.Color(0, 128, 0));
+    }
+    
+    pixels.show();
   }
-  /*
-  Serial.print(moteur_droit.getTargetPositionDegrees());
-  Serial.print(" ");
-  Serial.print(moteur_droit.getPositionDegrees());
-  Serial.print(" ");
-  Serial.println(moteur_droit.getSpeed());
-  */
 }
