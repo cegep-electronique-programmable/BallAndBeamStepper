@@ -240,13 +240,11 @@ void loop()
         distance_mm += mesure;
       }
       else {
-        //Serial.println("Erreur de mesure");
         i--;
       }
       
     }
     distance_mm = distance_mm / 3;
-    Serial.println(distance_mm);
     error = distance_target - distance_mm;
 
     float current_micros = micros();
@@ -283,13 +281,6 @@ void loop()
   {
     previousMillisDisplayLoop = currentMillis;
 
-    // Affiche propotionnal, integral et derivative avec un printf
-    // printf("%5.1f, %5.1f, %5.1f\n", propotionnal, integral, derivative);
-    /*
-    Serial.print(digitalRead(GPIO_B1));
-    Serial.print(" ");
-    Serial.println(digitalRead(GPIO_B2));
-    */
 
     // Afficher la distance, l'erreur et la position
     
@@ -299,30 +290,6 @@ void loop()
     Serial.print(" ");
     Serial.println(position);
     
-  /*
-
-
-    Serial.print(moteur_droit.getTargetPositionDegrees());
-    Serial.print(" ");
-    Serial.print(moteur_droit.getPositionDegrees());
-    Serial.print(" ");
-    Serial.println(moteur_droit.getSpeed());
-    */
-
-    // Afficher les valeurs de P, I et D avec la fonction printf
-    // printf("%5.1f, %5.1f, %5.1f, %5.1f, %5.1f, %5.1f\n", distance_mm, error, P, I, D, position);
-    // printf("P @ %d = %8.2f, D @ %d = %8.2f", &P, P, &D, D);
-
-    /*
-    Serial.print(position);
-    Serial.print(" ");
-    Serial.print(P);
-    Serial.print(" ");
-    Serial.print(I);
-    Serial.print(" ");
-    Serial.println(D);
-    */
-
     pixels.setPixelColor(0, pixels.Color(0, 0, 0));
     pixels.setPixelColor(1, pixels.Color(0, 0, 0));
     pixels.setPixelColor(2, pixels.Color(0, 0, 0));
