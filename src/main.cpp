@@ -107,6 +107,8 @@ unsigned long previousMillisControlLoop;
 #define KD 0.0025
 #define ANGLE_OFFSET 28
 
+float distance_target = POSITION_CENTRALE_MM;
+
 float dt = 0.01;
 float error_sum = 0;
 float error_previous = 0;
@@ -140,6 +142,7 @@ void setup()
     delay(1000);
   }
   lox.startRangeContinuous();
+
 
 #if MOTORS_ACTIVE == 1
   pixels.setPixelColor(0, pixels.Color(255, 0, 0));
@@ -225,16 +228,26 @@ void loop()
   if (currentMillis - previousMillisControlLoop >= dt * 1000)
   {
     previousMillisControlLoop = currentMillis;
-    
+
     // Filtre passe bas sur l'erreur
     distance_mm = 0;
-    for (int i = 0; i < 3; i++) 
+    for (int i = 0; i < 3; i++)
     {
       while (!lox.isRangeComplete());
-      distance_mm += lox.readRange();
+      uint16_t mesure = lox.readRange();
+      if (mesure < 1000)
+      {
+        distance_mm += mesure;
+      }
+      else {
+        //Serial.println("Erreur de mesure");
+        i--;
+      }
+      
     }
-    distance_mm = distance_mm/3;
-    error = POSITION_CENTRALE_MM - distance_mm;
+    distance_mm = distance_mm / 3;
+    Serial.println(distance_mm);
+    error = distance_target - distance_mm;
 
     float current_micros = micros();
     float current_dt = (current_micros - previsous_micros) / 1000000.0;
@@ -249,16 +262,17 @@ void loop()
 
     position = propotionnal + integral + derivative;
 
-    if (position < -25) {
+    if (position < -25)
+    {
       position = -25;
       error_sum = 0;
     }
-    else if (position > 45) {
+    else if (position > 45)
+    {
       position = 45;
       error_sum = 0;
     }
-    
-    
+
     moteur_droit.setTargetPositionDegrees(position + ANGLE_OFFSET);
     moteur_droit.computeSpeed();
   }
@@ -270,20 +284,24 @@ void loop()
     previousMillisDisplayLoop = currentMillis;
 
     // Affiche propotionnal, integral et derivative avec un printf
-    printf("%5.1f, %5.1f, %5.1f\n", propotionnal, integral, derivative);
-
+    // printf("%5.1f, %5.1f, %5.1f\n", propotionnal, integral, derivative);
+    /*
+    Serial.print(digitalRead(GPIO_B1));
+    Serial.print(" ");
+    Serial.println(digitalRead(GPIO_B2));
+    */
 
     // Afficher la distance, l'erreur et la position
-    /*
+    
     Serial.print(distance_mm);
     Serial.print(" ");
     Serial.print(error);
     Serial.print(" ");
-    Serial.print(position);
-    Serial.print(" ");
+    Serial.println(position);
     
+  /*
 
-    
+
     Serial.print(moteur_droit.getTargetPositionDegrees());
     Serial.print(" ");
     Serial.print(moteur_droit.getPositionDegrees());
@@ -292,10 +310,8 @@ void loop()
     */
 
     // Afficher les valeurs de P, I et D avec la fonction printf
-    //printf("%5.1f, %5.1f, %5.1f, %5.1f, %5.1f, %5.1f\n", distance_mm, error, P, I, D, position);
-    //printf("P @ %d = %8.2f, D @ %d = %8.2f", &P, P, &D, D);
-
-
+    // printf("%5.1f, %5.1f, %5.1f, %5.1f, %5.1f, %5.1f\n", distance_mm, error, P, I, D, position);
+    // printf("P @ %d = %8.2f, D @ %d = %8.2f", &P, P, &D, D);
 
     /*
     Serial.print(position);
@@ -333,7 +349,19 @@ void loop()
     {
       pixels.setPixelColor(4, pixels.Color(128, 0, 0));
     }
-
     pixels.show();
+
+    if (digitalRead(GPIO_B1) == 0)
+    {
+      // Changer la position cible (distance_target) entre 500 et 270
+      if (distance_target == 250)
+      {
+        distance_target = 500;
+      }
+      else
+      {
+        distance_target = 250;
+      }
+    }
   }
 }
