@@ -146,7 +146,7 @@ int initialisationSerie(void)
 {
   Serial.setPins(GPIO_UART_TX, GPIO_UART_RX);
   Serial.begin(115200);
-  printf("\r\n\r\nRobot Balance 2023\r\n");
+  printf("\r\n\r\nBall and Beam Stepper\r\n");
   return 0;
 }
 
