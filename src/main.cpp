@@ -252,7 +252,8 @@ void loop()
 
     // Filtre passe bas sur l'erreur
     distance_mm = 0;
-    for (int i = 0; i < 3; i++)
+    uint8_t total = 0;
+    for (int i = 0; i < 2; i++)
     {
       while (!lox.isRangeComplete())
         ;
@@ -260,13 +261,14 @@ void loop()
       if (mesure < 1000)
       {
         distance_mm += mesure;
-      }
-      else
-      {
-        i--;
+        total++;
       }
     }
-    distance_mm = distance_mm / 3;
+    if (total != 0)
+    {
+      distance_mm = distance_mm / total;
+    }
+
     error = distance_target - distance_mm;
 
     float current_micros = micros();
