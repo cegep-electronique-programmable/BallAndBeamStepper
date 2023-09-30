@@ -117,6 +117,37 @@ uint8_t anti_windup = 0;
 
 // ***************  DISPLAY  *************** //
 unsigned long previousMillisDisplayLoop;
+
+void displayErrorOnLeds(float error)
+{
+  pixels.setPixelColor(0, pixels.Color(0, 0, 0));
+  pixels.setPixelColor(1, pixels.Color(0, 0, 0));
+  pixels.setPixelColor(2, pixels.Color(0, 0, 0));
+  pixels.setPixelColor(3, pixels.Color(0, 0, 0));
+  pixels.setPixelColor(4, pixels.Color(0, 0, 0));
+
+  if (abs(error) < 50)
+  {
+    pixels.setPixelColor(2, pixels.Color(0, 128, 0));
+  }
+  else if (error >= 50 && error <= 200)
+  {
+    pixels.setPixelColor(1, pixels.Color(255, 165, 0));
+  }
+  else if (error <= -50 && error >= -200)
+  {
+    pixels.setPixelColor(3, pixels.Color(255, 165, 0));
+  }
+  else if (error > 200)
+  {
+    pixels.setPixelColor(0, pixels.Color(128, 0, 0));
+  }
+  else if (error < -200)
+  {
+    pixels.setPixelColor(4, pixels.Color(128, 0, 0));
+  }
+  pixels.show();
+}
 /********************************************/
 
 // ***************  SETUP  *************** //
@@ -129,29 +160,25 @@ void setup()
   initilisation_reussie += initialisationI2C();
   initilisation_reussie += initialisationSPI();
 
-  pixels.setPixelColor(0, pixels.Color(255, 0, 0));
-  pixels.setPixelColor(1, pixels.Color(0, 0, 0));
-  pixels.setPixelColor(2, pixels.Color(0, 0, 0));
-  pixels.setPixelColor(3, pixels.Color(0, 0, 0));
-  pixels.setPixelColor(4, pixels.Color(0, 0, 0));
+  pixels.clear();
+
+  // Low level initialisation completed
+  pixels.setPixelColor(0, pixels.Color(0, 255, 0));
   pixels.show();
 
   while (!lox.begin())
   {
-    Serial.println(F("Failed to boot VL53L0X"));
+    Serial.println(F("Erreur d'initialisation du capteur de distance VL53L0X"));
+    pixels.setPixelColor(1, pixels.Color(255, 0, 0));
+    pixels.show();
     delay(1000);
   }
   lox.startRangeContinuous();
-
-
-#if MOTORS_ACTIVE == 1
-  pixels.setPixelColor(0, pixels.Color(255, 0, 0));
-  pixels.setPixelColor(1, pixels.Color(255, 0, 0));
-  pixels.setPixelColor(2, pixels.Color(0, 0, 0));
-  pixels.setPixelColor(3, pixels.Color(0, 0, 0));
-  pixels.setPixelColor(4, pixels.Color(0, 0, 0));
+  // Initilisation du capteur de distance complétée
+  pixels.setPixelColor(1, pixels.Color(0, 255, 0));
   pixels.show();
 
+#if MOTORS_ACTIVE == 1
   moteur_droit.setSpeed(0);
   moteur_droit.setRatio(16);
 
@@ -164,15 +191,17 @@ void setup()
   pinMode(GPIO_ENABLE_MOTEURS, OUTPUT);
   digitalWrite(GPIO_ENABLE_MOTEURS, HIGH);
 
+  // Initilisation du moteur et desactivation
+  pixels.setPixelColor(2, pixels.Color(0, 255, 0));
+  pixels.show();
+
   delay(2000);
 
-  pixels.setPixelColor(0, pixels.Color(255, 0, 0));
-  pixels.setPixelColor(1, pixels.Color(255, 0, 0));
-  pixels.setPixelColor(2, pixels.Color(255, 0, 0));
-  pixels.setPixelColor(3, pixels.Color(0, 0, 0));
-  pixels.setPixelColor(4, pixels.Color(0, 0, 0));
   pixels.show();
   digitalWrite(GPIO_ENABLE_MOTEURS, LOW);
+  // Initilisation du moteur complété
+  pixels.setPixelColor(3, pixels.Color(0, 255, 0));
+  pixels.show();
 
   // Se deplacer a l'horizontal avant de commencer
   moteur_droit.setTargetPositionDegrees(ANGLE_OFFSET);
@@ -184,10 +213,7 @@ void setup()
     delay(100);
   }
 
-  pixels.setPixelColor(0, pixels.Color(0, 255, 0));
-  pixels.setPixelColor(1, pixels.Color(0, 255, 0));
-  pixels.setPixelColor(2, pixels.Color(0, 255, 0));
-  pixels.setPixelColor(3, pixels.Color(0, 255, 0));
+  // Position initiale atteinte
   pixels.setPixelColor(4, pixels.Color(0, 255, 0));
   pixels.show();
 
@@ -198,12 +224,7 @@ void setup()
 #endif
 
   // Éteindre toutes les LEDs
-  pixels.setPixelColor(0, pixels.Color(0, 0, 0));
-  pixels.setPixelColor(1, pixels.Color(0, 0, 0));
-  pixels.setPixelColor(2, pixels.Color(0, 0, 0));
-  pixels.setPixelColor(3, pixels.Color(0, 0, 0));
-  pixels.setPixelColor(4, pixels.Color(0, 0, 0));
-  pixels.show();
+  pixels.clear();
 }
 
 // ***************  LOOP  *************** //
@@ -233,16 +254,17 @@ void loop()
     distance_mm = 0;
     for (int i = 0; i < 3; i++)
     {
-      while (!lox.isRangeComplete());
+      while (!lox.isRangeComplete())
+        ;
       uint16_t mesure = lox.readRange();
       if (mesure < 1000)
       {
         distance_mm += mesure;
       }
-      else {
+      else
+      {
         i--;
       }
-      
     }
     distance_mm = distance_mm / 3;
     error = distance_target - distance_mm;
@@ -281,42 +303,15 @@ void loop()
   {
     previousMillisDisplayLoop = currentMillis;
 
-
     // Afficher la distance, l'erreur et la position
-    
+
     Serial.print(distance_mm);
     Serial.print(" ");
     Serial.print(error);
     Serial.print(" ");
     Serial.println(position);
-    
-    pixels.setPixelColor(0, pixels.Color(0, 0, 0));
-    pixels.setPixelColor(1, pixels.Color(0, 0, 0));
-    pixels.setPixelColor(2, pixels.Color(0, 0, 0));
-    pixels.setPixelColor(3, pixels.Color(0, 0, 0));
-    pixels.setPixelColor(4, pixels.Color(0, 0, 0));
 
-    if (abs(error) < 50)
-    {
-      pixels.setPixelColor(2, pixels.Color(0, 128, 0));
-    }
-    else if (error >= 50 && error <= 200)
-    {
-      pixels.setPixelColor(1, pixels.Color(255, 165, 0));
-    }
-    else if (error <= -50 && error >= -200)
-    {
-      pixels.setPixelColor(3, pixels.Color(255, 165, 0));
-    }
-    else if (error > 200)
-    {
-      pixels.setPixelColor(0, pixels.Color(128, 0, 0));
-    }
-    else if (error < -200)
-    {
-      pixels.setPixelColor(4, pixels.Color(128, 0, 0));
-    }
-    pixels.show();
+    displayErrorOnLeds(error);
 
     if (digitalRead(GPIO_B1) == 0)
     {
