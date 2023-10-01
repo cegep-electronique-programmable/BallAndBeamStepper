@@ -111,40 +111,42 @@ float distance_target = POSITION_CENTRALE_MM;
 
 float distance_mm = 0;
 float vitesse_mm_s = 0;
-float dt = 0.1;
+float dt = 0.05;
+float error = 0;
 float error_sum = 0;
+float error_delta = 0;
 float error_previous = 0;
+float propotionnal = 0;
+float integral = 0;
+float derivative = 0;
+float position_degrees = 0;
 uint8_t anti_windup = 0;
 /********************************************/
 
 // ***************  DISPLAY  *************** //
 unsigned long previousMillisDisplayLoop;
 
-void displayErrorOnLeds(float error)
+void displayErrorOnLeds(float e)
 {
-  pixels.setPixelColor(0, pixels.Color(0, 0, 0));
-  pixels.setPixelColor(1, pixels.Color(0, 0, 0));
-  pixels.setPixelColor(2, pixels.Color(0, 0, 0));
-  pixels.setPixelColor(3, pixels.Color(0, 0, 0));
-  pixels.setPixelColor(4, pixels.Color(0, 0, 0));
+  pixels.clear();
 
-  if (abs(error) < 50)
+  if (abs(e) < 50)
   {
     pixels.setPixelColor(2, pixels.Color(0, 128, 0));
   }
-  else if (error >= 50 && error <= 200)
+  else if (e >= 50 && e <= 200)
   {
     pixels.setPixelColor(1, pixels.Color(255, 165, 0));
   }
-  else if (error <= -50 && error >= -200)
+  else if (e <= -50 && e >= -200)
   {
     pixels.setPixelColor(3, pixels.Color(255, 165, 0));
   }
-  else if (error > 200)
+  else if (e > 200)
   {
     pixels.setPixelColor(0, pixels.Color(128, 0, 0));
   }
-  else if (error < -200)
+  else if (e < -200)
   {
     pixels.setPixelColor(4, pixels.Color(128, 0, 0));
   }
@@ -231,20 +233,13 @@ void setup()
 
 // ***************  LOOP  *************** //
 
-  float previous_micros = micros();
-  float previous_distance_mm = 0;
+float previous_micros = micros();
+float previous_distance_mm = 0;
 void loop()
 {
 #if OTA_ACTIVE == 1
   ArduinoOTA.handle();
 #endif
-
-  float error = 0;
-  float error_delta = 0;
-  float position_degrees = 0;
-  float propotionnal = 0;
-  float integral = 0;
-  float derivative = 0;
 
   // Boucle de controle de la vitesse horizontale
   unsigned long currentMillis = millis();
@@ -255,13 +250,14 @@ void loop()
 
     // Lire la distance valide (< 1000)
     float mesure_mm = 0;
-    do {
-      while (!lox.isRangeComplete());
+    do
+    {
+      while (!lox.isRangeComplete())
+        ;
       mesure_mm = lox.readRange();
-    }
-    while (mesure_mm > 1000);
+    } while (mesure_mm > 1000);
 
-     // Calculer le délai depuis la dernière itération
+    // Calculer le délai depuis la dernière itération
     float current_micros = micros();
     float current_dt = (current_micros - previous_micros) / 1000000.0;
     previous_micros = micros();
@@ -270,9 +266,9 @@ void loop()
     float vitesse_max_mm_s = vitesse_mm_s * 2 + 30;
     float nouvelle_distance_mm_max = distance_mm + vitesse_max_mm_s * current_dt;
     float nouvelle_distance_mm_min = distance_mm - vitesse_max_mm_s * current_dt;
-    
+
     // Afficher avec un printf les variables mesure_mm, nouvelle_distance_mm_max, nouvelle_distance_mm_min, distance_mm
-    //printf("%5.2f %5.2f %5.2f %5.2f", mesure_mm, nouvelle_distance_mm_max, nouvelle_distance_mm_min, distance_mm);
+    // printf("%5.2f %5.2f %5.2f %5.2f", mesure_mm, nouvelle_distance_mm_max, nouvelle_distance_mm_min, distance_mm);
 
     // Saturer la distance en fonction de la vitesse et de l'acceleration
     if (mesure_mm > nouvelle_distance_mm_max)
@@ -283,18 +279,17 @@ void loop()
     {
       distance_mm = nouvelle_distance_mm_min;
     }
-    else 
+    else
     {
       distance_mm = mesure_mm;
     }
 
-    printf(" %5.2f ", distance_mm);
-    
-    // Calculer la vitesse
-    vitesse_mm_s = abs(distance_mm - previous_distance_mm) / current_dt;
-    previous_distance_mm = distance_mm;
-    printf("%5.2f \n", vitesse_mm_s);
+    // printf(" %5.2f ", distance_mm);
 
+    // Calculer la vitesse
+    vitesse_mm_s = 0.6 * vitesse_mm_s + 0.5 * abs(distance_mm - previous_distance_mm) / current_dt;
+    previous_distance_mm = distance_mm;
+    // printf("%5.2f \n", vitesse_mm_s);
 
     // Calculer l'erreur
     error = distance_target - distance_mm;
@@ -334,14 +329,15 @@ void loop()
     previousMillisDisplayLoop = currentMillis;
 
     // Afficher la distance, l'erreur et la position
-/*
+
     Serial.print(distance_mm);
     Serial.print(" ");
     Serial.print(error);
     Serial.print(" ");
     Serial.println(position_degrees);
-*/
+
     displayErrorOnLeds(error);
+    pixels.show();
 
     if (digitalRead(GPIO_B1) == 0)
     {
