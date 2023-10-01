@@ -109,7 +109,9 @@ unsigned long previousMillisControlLoop;
 
 float distance_target = POSITION_CENTRALE_MM;
 
-float dt = 0.01;
+float distance_mm = 0;
+float vitesse_mm_s = 0;
+float dt = 0.1;
 float error_sum = 0;
 float error_previous = 0;
 uint8_t anti_windup = 0;
@@ -228,20 +230,21 @@ void setup()
 }
 
 // ***************  LOOP  *************** //
+
+  float previous_micros = micros();
+  float previous_distance_mm = 0;
 void loop()
 {
 #if OTA_ACTIVE == 1
   ArduinoOTA.handle();
 #endif
 
-  float distance_mm = 0;
   float error = 0;
   float error_delta = 0;
-  float position = 0;
+  float position_degrees = 0;
   float propotionnal = 0;
   float integral = 0;
   float derivative = 0;
-  float previsous_micros = micros();
 
   // Boucle de controle de la vitesse horizontale
   unsigned long currentMillis = millis();
@@ -250,52 +253,77 @@ void loop()
   {
     previousMillisControlLoop = currentMillis;
 
-    // Filtre passe bas sur l'erreur
-    distance_mm = 0;
-    uint8_t total = 0;
-    for (int i = 0; i < 2; i++)
-    {
-      while (!lox.isRangeComplete())
-        ;
-      uint16_t mesure = lox.readRange();
-      if (mesure < 1000)
-      {
-        distance_mm += mesure;
-        total++;
-      }
+    // Lire la distance valide (< 1000)
+    float mesure_mm = 0;
+    do {
+      while (!lox.isRangeComplete());
+      mesure_mm = lox.readRange();
     }
-    if (total != 0)
+    while (mesure_mm > 1000);
+
+     // Calculer le délai depuis la dernière itération
+    float current_micros = micros();
+    float current_dt = (current_micros - previous_micros) / 1000000.0;
+    previous_micros = micros();
+
+    // Déterminer le déplacement max en fonction de la vitesse et de l'acceleration
+    float vitesse_max_mm_s = vitesse_mm_s * 2 + 30;
+    float nouvelle_distance_mm_max = distance_mm + vitesse_max_mm_s * current_dt;
+    float nouvelle_distance_mm_min = distance_mm - vitesse_max_mm_s * current_dt;
+    
+    // Afficher avec un printf les variables mesure_mm, nouvelle_distance_mm_max, nouvelle_distance_mm_min, distance_mm
+    //printf("%5.2f %5.2f %5.2f %5.2f", mesure_mm, nouvelle_distance_mm_max, nouvelle_distance_mm_min, distance_mm);
+
+    // Saturer la distance en fonction de la vitesse et de l'acceleration
+    if (mesure_mm > nouvelle_distance_mm_max)
     {
-      distance_mm = distance_mm / total;
+      distance_mm = nouvelle_distance_mm_max;
+    }
+    else if (mesure_mm < nouvelle_distance_mm_min)
+    {
+      distance_mm = nouvelle_distance_mm_min;
+    }
+    else 
+    {
+      distance_mm = mesure_mm;
     }
 
+    printf(" %5.2f ", distance_mm);
+    
+    // Calculer la vitesse
+    vitesse_mm_s = abs(distance_mm - previous_distance_mm) / current_dt;
+    previous_distance_mm = distance_mm;
+    printf("%5.2f \n", vitesse_mm_s);
+
+
+    // Calculer l'erreur
     error = distance_target - distance_mm;
 
-    float current_micros = micros();
-    float current_dt = (current_micros - previsous_micros) / 1000000.0;
-    previsous_micros = micros();
+    // Calculer la somme de l'erreur
     error_sum += error * dt;
+
+    // Calculer la dérivée de l'erreur
     error_delta = (error - error_previous) / dt;
     error_previous = error;
 
+    // Calculer la position angulaire du moteur
     propotionnal = KP * error;
     integral = KI * error_sum;
     derivative = KD * error_delta;
+    position_degrees = propotionnal + integral + derivative;
 
-    position = propotionnal + integral + derivative;
-
-    if (position < -25)
+    if (position_degrees < -25)
     {
-      position = -25;
+      position_degrees = -25;
       error_sum = 0;
     }
-    else if (position > 45)
+    else if (position_degrees > 45)
     {
-      position = 45;
+      position_degrees = 45;
       error_sum = 0;
     }
 
-    moteur_droit.setTargetPositionDegrees(position + ANGLE_OFFSET);
+    moteur_droit.setTargetPositionDegrees(position_degrees + ANGLE_OFFSET);
     moteur_droit.computeSpeed();
   }
 
@@ -306,13 +334,13 @@ void loop()
     previousMillisDisplayLoop = currentMillis;
 
     // Afficher la distance, l'erreur et la position
-
+/*
     Serial.print(distance_mm);
     Serial.print(" ");
     Serial.print(error);
     Serial.print(" ");
-    Serial.println(position);
-
+    Serial.println(position_degrees);
+*/
     displayErrorOnLeds(error);
 
     if (digitalRead(GPIO_B1) == 0)
