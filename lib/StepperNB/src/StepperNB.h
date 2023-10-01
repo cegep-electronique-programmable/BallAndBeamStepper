@@ -49,8 +49,6 @@ private:
 
     int timer_period;
 
-    float acceleration_max_degrees_per_second2;
-
     float position_error;
     float position_error_sum;
     float position_error_previous;

@@ -1,6 +1,9 @@
 #include "Arduino.h"
 #include "StepperNB.h"
 
+#define MAX_SPEED_DEG_SEC 3600.0
+#define MAX_ACCELERATION_DEG_SEC2 500.0
+
 StepperNB::StepperNB(int pin_direction, int pin_step, int pin_ms1, int pin_ms2, int pin_ms3, int number_of_steps, bool direction_inverted)
 {
     this->pin_direction = pin_direction;
@@ -20,15 +23,13 @@ StepperNB::StepperNB(int pin_direction, int pin_step, int pin_ms1, int pin_ms2, 
     this->target_speed_degrees_per_second = 0;
     this->target_position_degrees = 0;
 
-    this->acceleration_max_degrees_per_second2 = 100.0;
-
     this->position_error = 0;
     this->position_error_sum = 0;
     this->position_error_previous = 0;
     this->position_error_derivative = 0;
     this->position_error_dt = 0;
     this->position_error_dt_previous = micros();
-    this->position_kp = 3.5;
+    this->position_kp = 6.5;
     this->position_ki = 0.5;
     this->position_kd = 0.01;
 }
@@ -59,16 +60,16 @@ void StepperNB::computeSpeed(void) {
     float target_speed = this->position_kp * position_error + this->position_ki * this->position_error_sum + this->position_kd * this->position_error_derivative;
 
     // Saturation
-    if (target_speed > this->getSpeed() + this->acceleration_max_degrees_per_second2) {
-        target_speed = this->getSpeed() + this->acceleration_max_degrees_per_second2;
+    if (target_speed > this->getSpeed() + MAX_ACCELERATION_DEG_SEC2) {
+        target_speed = this->getSpeed() + MAX_ACCELERATION_DEG_SEC2;
         this->position_error_sum = 0;
     }
-    else if (target_speed < this->getSpeed() - this->acceleration_max_degrees_per_second2) {
-        target_speed = this->getSpeed() - this->acceleration_max_degrees_per_second2;
+    else if (target_speed < this->getSpeed() - MAX_ACCELERATION_DEG_SEC2) {
+        target_speed = this->getSpeed() - MAX_ACCELERATION_DEG_SEC2;
         this->position_error_sum = 0;
     }
 
-    #define MAX_SPEED_DEG_SEC 1080
+    
     if (target_speed > MAX_SPEED_DEG_SEC) {
         target_speed = MAX_SPEED_DEG_SEC;
         this->position_error_sum = 0;
