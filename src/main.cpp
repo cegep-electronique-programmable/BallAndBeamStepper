@@ -102,10 +102,10 @@ Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 unsigned long previousMillisControlLoop;
 
 #define POSITION_CENTRALE_MM 270
-#define KP 0.05
-#define KI 0.038
-#define KD 0.0025
-#define ANGLE_OFFSET 28
+#define KP 0.010 //0.05
+#define KI 0.1 // 0.038
+#define KD 0.05 //0.0025
+#define ANGLE_OFFSET 80
 
 float distance_target = POSITION_CENTRALE_MM;
 
@@ -307,16 +307,19 @@ void loop()
     derivative = KD * error_delta;
     position_degrees = propotionnal + integral + derivative;
 
-    if (position_degrees < -25)
+    if (position_degrees < -70)
     {
-      position_degrees = -25;
+      position_degrees = -70;
       error_sum = 0;
     }
-    else if (position_degrees > 45)
+    else if (position_degrees > 70)
     {
-      position_degrees = 45;
+      position_degrees = 70;
       error_sum = 0;
     }
+
+    // arrondire la position angulaire du moteur au degré pres
+    position_degrees = round(position_degrees);
 
     moteur_droit.setTargetPositionDegrees(position_degrees + ANGLE_OFFSET);
     moteur_droit.computeSpeed();
@@ -350,6 +353,7 @@ void loop()
       {
         distance_target = 250;
       }
+      error_sum = 0;
     }
   }
 }
