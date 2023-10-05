@@ -2,7 +2,7 @@
 #include "StepperNB.h"
 
 #define MAX_SPEED_DEG_SEC 3600.0
-#define MAX_ACCELERATION_DEG_SEC2 500.0
+#define MAX_ACCELERATION_DEG_SEC2 100.0
 
 StepperNB::StepperNB(int pin_direction, int pin_step, int pin_ms1, int pin_ms2, int pin_ms3, int number_of_steps, bool direction_inverted)
 {
